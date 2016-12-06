@@ -10,9 +10,9 @@ import tornado.websocket
 from tornado.web import StaticFileHandler
 from tornado.options import define, options, parse_command_line
 
+define("port", default='80', help="Port to run app on")
 define("debug", default=False, help="run in debug mode")
 
-PORT = 8888
 static_path = os.path.join(os.path.dirname(__file__), 'static')
 
 class Handler_Root(tornado.web.RequestHandler):
@@ -20,7 +20,6 @@ class Handler_Root(tornado.web.RequestHandler):
         self.render('index.html')
 
 def make_app():
-    parse_command_line()
     return tornado.web.Application([
             (r'/', Handler_Root),
             (r'/static/(.*)', StaticFileHandler, {'path': static_path}),
@@ -30,8 +29,10 @@ def make_app():
         template_path=os.path.join(os.path.dirname(__file__), 'templates'),
         debug=options.debug,
     )
-    
 
+parse_command_line()
+
+PORT = int(options.port)
 
 def runserver():
     app = make_app()
