@@ -7,4 +7,4 @@ bsControllers.controller('PowersController', ['$scope', function($scope){
 					 {name: 'Biotic Charge'}];
 }]);
 
-bsControllers.controller('SplashController', ['$scope', function($scope){}]);
+bsControllers.controller('AboutController', ['$scope', function($scope){}]);

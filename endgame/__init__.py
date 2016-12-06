@@ -10,7 +10,7 @@ import tornado.websocket
 from tornado.web import StaticFileHandler
 from tornado.options import define, options, parse_command_line
 
-define("port", default='80', help="Port to run app on")
+define("port", default='8080', help="Port to run app on")
 define("debug", default=False, help="run in debug mode")
 
 static_path = os.path.join(os.path.dirname(__file__), 'static')
