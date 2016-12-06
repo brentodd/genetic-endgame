@@ -32,7 +32,7 @@ def make_app():
 
 parse_command_line()
 
-PORT = os.environ.get('PORT',int(options.port))
+PORT = int(os.environ.get('PORT',options.port))
 
 def runserver():
     app = make_app()
