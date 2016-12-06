@@ -1,1 +1,1 @@
-web: runserver
+web: python endgame/__init__.py

@@ -38,3 +38,6 @@ def runserver():
     app.listen(PORT)
     print("Tornado Server listening on port %i" % PORT)
     tornado.ioloop.IOLoop.current().start()
+
+if __name__ == '__main__':
+    runserver()
