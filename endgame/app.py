@@ -19,7 +19,7 @@ def runserver():
     requested port.'''
     app = make_app(options)
     app.listen(options.port)
-    print("Tornado Server listening on port %i" % options.port)
+    print("Tornado Server listening on port %s" % options.port)
     tornado.ioloop.IOLoop.current().start()
 
 # Not sure how to get heroku to run my runserver script to start the website,
