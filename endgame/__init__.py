@@ -1,44 +1,39 @@
 import logging
 import os
 
-from tornado import gen
-from tornado.concurrent import Future
-import tornado.escape
+#from tornado import gen
+#from tornado.concurrent import Future
+#import tornado.escape
 import tornado.ioloop
 import tornado.web
-import tornado.websocket
-from tornado.web import StaticFileHandler
+#import tornado.websocket
 from tornado.options import define, options, parse_command_line
 
-define("port", default='8080', help="Port to run app on")
-define("debug", default=False, help="run in debug mode")
+from endgame.routes import make_routes
 
-static_path = os.path.join(os.path.dirname(__file__), 'static')
 
-class Handler_Root(tornado.web.RequestHandler):
-    def get(self):
-        self.render('index.html')
+'''
+We're just going to set up the options for running the site. Actually run the
+site using endgame.app:runserver.
+'''
 
-def make_app():
-    return tornado.web.Application([
-            (r'/', Handler_Root),
-            (r'/static/(.*)', StaticFileHandler, {'path': static_path}),
-            #(r'/roll', Handler_DoRoll),
-            #(r'/rollsocket', Handler_SocketRolls),
-        ],
-        template_path=os.path.join(os.path.dirname(__file__), 'templates'),
-        debug=options.debug,
-    )
 
+# Define the command line options for running the site
+define("port",
+       default=os.environ.get('PORT',8080),
+       type=int,
+       help="Port to run app on")
+
+define("debug",
+       default=False,
+       help="run in debug mode")
+
+define("static-path",
+       default=os.path.join(os.path.dirname(__file__), 'static'),
+       help="Location of static resources (js, css, images, etc)")
+
+# Parse the command line options, so they are available in the global
+# tornado.options.options object
 parse_command_line()
 
-PORT = int(os.environ.get('PORT',options.port))
 
-def runserver():
-    app = make_app()
-    app.listen(PORT)
-    print("Tornado Server listening on port %i" % PORT)
-    tornado.ioloop.IOLoop.current().start()
-
-if __name__ == '__main__':
-    runserver()

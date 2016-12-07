@@ -1,1 +1,1 @@
-web: python endgame/__init__.py
+web: python endgame/app.py
