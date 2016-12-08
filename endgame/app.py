@@ -5,7 +5,10 @@ import tornado.ioloop
 import tornado.web
 from tornado.options import options
 
+from endgame.models import initialize_sql, meta
 from endgame.routes import make_routes
+
+logger = logging.getLogger(__name__)
 
 def make_app(options):
     '''Create the tornado application'''
@@ -19,8 +22,13 @@ def runserver():
     requested port.'''
     app = make_app(options)
     app.listen(options.port)
-    print("Tornado Server listening on port %s" % options.port)
+    logger.info("Tornado Server listening on port %s" % options.port)
     tornado.ioloop.IOLoop.current().start()
+
+# Initialize SQLAlchemy - will pull DATABASE_URL from environ variables by
+# default. Can add any arguments to this call which we would like passed to
+# the engine
+initialize_sql(encoding='utf-8')
 
 # Not sure how to get heroku to run my runserver script to start the website,
 # so right now it runs this file directly (see ../Procfile)
