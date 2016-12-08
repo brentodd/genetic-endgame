@@ -21,7 +21,8 @@ def load_config_env(app):
                     app.config.setdefault(var, os.environ[var])
                 else:
                     app.config.setdefault(var, val)
-    app.config.setdefault('DATABASE_URL', os.environ.get('DATABASE_URL'))
+    if 'DATABASE_URL' in os.environ:
+        app.config.setdefault('DATABASE_URL', os.environ['DATABASE_URL'])
     #app.config.setdefault('SERVER_NAME', 'http://localhost:8080')
     
 
