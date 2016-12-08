@@ -6,5 +6,5 @@ __all__ = ['Base', 'Session']
 
 metadata = MetaData()
 
-Session = scoped_session(sessionmaker(autocommit=True))
+Session = scoped_session(sessionmaker(autocommit=False))
 Base = declarative_base(metadata=metadata)

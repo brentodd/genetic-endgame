@@ -1,11 +1,10 @@
 import logging
 
-import tornado.web
-
 from endgame.models import AuthUser, meta
 
 logger = logging.getLogger(__name__)
 
+'''
 class LoginController(tornado.web.RequestHandler):
     def get(self):
         # we would want to render the login form, but it's an angular.js
@@ -26,3 +25,4 @@ class LoginController(tornado.web.RequestHandler):
         u = s.query(AuthUser).get( args['username'] )
         logger.info(u)
         logger.info('password checks out: %s' % u.checkpw(args['password']))
+'''
