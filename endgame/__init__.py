@@ -21,7 +21,7 @@ def load_config_env(app):
                     app.config.setdefault(var, os.environ[var])
                 else:
                     app.config.setdefault(var, val)
-    #app.config.setdefault('SECRET_KEY', os.environ.get('SECRET_KEY'))
+    app.config.setdefault('DATABASE_URL', os.environ.get('DATABASE_URL'))
     #app.config.setdefault('SERVER_NAME', 'http://localhost:8080')
     
 
@@ -30,7 +30,7 @@ app.config.from_object(__name__)
 load_config_env(app)
 mako = MakoTemplates(app)
 
-# Initialize SQLAlchemy - will pull DATABASE_URL from environ variables by
+# Initialize SQLAlchemy - will pull DATABASE_URL from config variables by
 # default. Can add any arguments to this call which we would like passed to
 # the engine
 from endgame.models import initialize_sql, meta
