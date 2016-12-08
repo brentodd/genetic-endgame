@@ -17,8 +17,9 @@ fileConfig(config.config_file_name)
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 #target_metadata = None
+from endgame import app
 from endgame.models import initialize_sql, meta
-initialize_sql()
+initialize_sql(app.config)
 target_metadata = meta.Base.metadata
 
 # other values from the config, defined by the needs of env.py,
