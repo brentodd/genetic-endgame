@@ -20,7 +20,7 @@ Being cheap, I don't want to spend a whole lot of money to host a site I'm just 
 
 [Details on Heroku](https://www.heroku.com/)
 
-### Flask
-After using Python based web-frameworks for *a decade* now, python feels like home. That being said, I've grown complacent with Pylons/Pyramid, and want to try something different. So I've looked to Tornado - which uses asynchronous networking and other cool stuff. After a lot of research, I don't think I need asynchronous features, so down with tornado! **Flask** is where it's at now. Small, I can add the stuff I want (mako, sqlalchemy, and so on).
+### Tornado
+After using Python based web-frameworks for *a decade* now, python feels like home. That being said, I've grown complacent with Pylons/Pyramid, and want to try something different. So I've looked to Tornado - which uses asynchronous networking and other cool stuff. I don't know what I can do with that, yet!
 
-[Details on Flask](http://flask.pocoo.org/)
+[Details on Tornado](http://www.tornadoweb.org/)
