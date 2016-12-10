@@ -18,6 +18,8 @@
     }
     .starter-template {
       padding: 40px 15px;
+    }
+    .center {
       text-align: center;
     }
   </style>
@@ -36,14 +38,18 @@
       </div>
       <div id="navbar" class="navbar-collapse collapse">
         <form class="navbar-form navbar-right">
-          <button type="submit" class="btn btn-primary">Create Account</button>
-          <button type="submit" class="btn btn-success">Sign in</button>
+          <a class="btn btn-primary" ng-href="#!/about">About</a>
         </form>
       </div><!--/.navbar-collapse -->
     </div>
   </nav>
   <div class="starter-template">
     <div ng-view>
+    </div>
+    <div class="container">
+      % for user in users:
+      user is ${user.username}
+      % endfor
     </div>
   </div>
   <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->

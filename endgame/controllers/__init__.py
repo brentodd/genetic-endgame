@@ -1,8 +1,34 @@
+from functools import wraps
+
+from flask import request
+from flask_mako import render_template
+
 from endgame import app
-from endgame.controllers.index import index
 from endgame.models import meta
 
 
+# I vastly prefer returning a dict from my views and having a decorator apply
+# the template. 
+def templated(template=None):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            template_name = template
+            if template_name is None:
+                template_name = request.endpoint.replace('.', '/') + '.mako'
+            ctx = f(*args, **kwargs)
+            if ctx is None:
+                ctx = {}
+            elif not isinstance(ctx, dict):
+                return ctx
+            return render_template(template_name, **ctx)
+        return decorated_function
+    return decorator
+    
+
+# Import all controllers here, so that the @app.route are found when the site
+# loads up, and the routes get registered properly.
+from endgame.controllers.index import index
 
 # Here it is reasonable to require that endgame.app exists and is a flask
 # app. If we're creating controllers for the app, it's because we're going to
