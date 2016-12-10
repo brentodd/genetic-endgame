@@ -1,51 +1,44 @@
-import logging
-import os
-import pprint
-
 from flask import Flask
 from flask_mako import MakoTemplates
 
-
-
-def load_config_env(app):
-    '''In heroku, important shit will be in environment variables. In a local
-    dev environment, they'll be in the .env file. '''
-    oneup = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    dot_env_file = os.path.join(oneup, '.env')
-    if os.path.exists(dot_env_file):
-        with open(dot_env_file, 'r') as env:
-            for line in env.readlines():
-                var,val = line.strip().split('=')
-                # We want to PREFER what's in environ, if it exists
-                if var in os.environ:
-                    app.config.setdefault(var, os.environ[var])
-                else:
-                    app.config.setdefault(var, val)
-    if 'DATABASE_URL' in os.environ:
-        app.config.setdefault('DATABASE_URL', os.environ['DATABASE_URL'])
-    #app.config.setdefault('SERVER_NAME', 'http://localhost:8080')
-    
+from endgame.config import config
+from endgame.models import initialize_sql, meta
 
 app = Flask(__name__)
+
+# Initialize the configuration. The from_object would load configuration from
+# this very file, but I don't have any variables set up in here. But I guess
+# it's good practice to say this anyway?
 app.config.from_object(__name__)
-load_config_env(app)
+
+# This variable config is loaded from endgame.config - it pulls from config
+# files and/or environment variables.
+app.config.update(config)
+
+# Initialize Mako templates. This is using the flask_mako addon, rather than
+# manually installing and configuring it myself. Was I lazy doing it this way?
+# Yes. Yes I was.  I should do it manually...
 mako = MakoTemplates(app)
 
-# Initialize SQLAlchemy - will pull DATABASE_URL from config variables by
-# default. Can add any arguments to this call which we would like passed to
-# the engine
-from endgame.models import initialize_sql, meta
-initialize_sql(config=app.config, encoding='utf-8')
-
-# add a helpers context parser, so `h` is available in templates
-@app.context_processor
-def context_helpers():
-    from endgame.lib import helpers
-    return dict(h = helpers)
-
-
-# import all of the controllers
+# Import all of the controllers. This requires that `app` exists in endgame
+# so it must happend after app is configured. (the @app.route decorator, etc)
 from endgame.controllers import *
 
+def makeapp():
+    # Initialize SQLAlchemy - will pull DATABASE_URL from config variables by
+    # default. Can add any arguments to this call which we would like passed 
+    # to the engine. Executed in makeapp, because if we're doing TESTS we
+    # do not want to do this yet because we will OVERWRITE the config with a
+    # test database and call initialize_sql then.
+    initialize_sql(config=app.config, encoding='utf-8')
+    return app
+    
+
+def runserver():
+    # Fire up the app - host and port  come from SERVER_NAME config variable
+    makeapp().run()
+
+# Really, you shouldn't just execute this file, but this will make sure that
+# gives you what you're looking for.
 if __name__ == "__main__":
-    app.run(host='127.0.0.1', port=int(app.config['PORT']))
+    runserver()

@@ -5,7 +5,7 @@ setup(
     packages=find_packages(),
     entry_points={
             'console_scripts': [
-                'runserver = endgame.app:runserver',
+                'runserver = endgame:runserver',
             ],
         },
 )
