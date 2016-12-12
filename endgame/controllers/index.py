@@ -12,3 +12,8 @@ def index():
     app.logger.debug('Ran query against the database, and it worked.\n'
                     'There are %i users in the system' % len(users))
     return {'users':users}
+
+@app.route('/ahq')
+@templated('oo_brr.mako')
+def oobrr():
+    return {}
