@@ -10,7 +10,7 @@
         #svg {
             border: solid 2px #ccc;
             background-color: #000;
-            /*width: 375;*/
+            width: 500;
             height: auto;
             display:block;
             float: left;
@@ -22,7 +22,7 @@
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     </head>
     <body>
-        <svg id="svg" class="col-xs-12">
+        <svg id="svg" class="col-sm-offset-1 col-sm-10">
         </svg>
 
   <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
@@ -34,14 +34,17 @@
     
     var AHQ = AHQ || {
         canvas: null,
+        the_map: null,
         the_o_g: null,
         gt: {x:0, y:0}, //gt == global translate, x and y are current translate
-        options: {scale: 8,  // square size in pixels
+        options: {scale: 10,  // square size in pixels
                   fontSize: 12,
-                  start_x: 30,  // X of starting square of dungeon
-                  start_y: 7,  // Y of starting square of dungeon
+                  max_x: 50,    // Maximum width of the map (E-W)
+                  max_y: 65,    // Maximum height of the map (N-S)
+                  start_x: 24,  // X of starting square of dungeon
+                  start_y: 12,  // Y of starting square of dungeon
                   start_from: 'n', // stairs down come from what direction?
-                  walls: {stroke: "#633",
+                  walls: {stroke: "#aaf",
                           strokeWidth: 1},
                   placeholders: {fill:"none"},
                   doors: {stroke: "#633",
@@ -66,8 +69,12 @@
         get_passage_feature: function(){
             return AHQ.table_passage_feature[AHQ.roll(2,12)-1]
         },
+        // Room Type Table, roll 1d12
         table_room_type: ['n','n','n','n','n','n','h','h','l','l','q','q'],
         get_room_type: function(){ return AHQ.choose(AHQ.table_room_type)},
+        // Room Doors Table, roll 1d12, 
+        table_room_doors: [0,0,0,0,1,1,1,1,2,2,2,2],
+        get_room_doors: function(){return AHQ.choose(AHQ.table_room_doors)},
         between: function(min,max){
             return Math.floor(Math.random()*(max-min+1)+min);
         },
@@ -175,23 +182,28 @@
                 AHQ.the_o_g.append(AHQ.registry_doors[key].g)
             }
         },
-        make_placeholder: function(x,y,width,height){
+        make_placeholder: function(x,y,width,height, display){
             /* A function which creates a Placeholder object. Placeholder
             object constructor is hidden - can only be created via this
             function.
             */
-            function Placeholder(x,y,width,height){
+            function Placeholder(x,y,width,height,display){
                 this.x = x;
                 this.y = y;
                 this.width = width;
                 this.height = height;
+                this.display = display; // we don't want to display room placeholders
                 x = (x * AHQ.options.scale)+1;
                 y = (y * AHQ.options.scale)+1;
                 width = (width * AHQ.options.scale)-2;
                 height = (height * AHQ.options.scale)-2;
                 //this.g = AHQ.canvas.rect(x, y, width, height).attr(AHQ.options.placeholders);
-                bg = AHQ.canvas.rect(x, y, width, height).attr({fill: "#fff", fillOpacity:0.3});
-                grid = AHQ.canvas.rect(x, y, width, height).attr({fill: AHQ.pattern.grey(), fillOpacity:0.3});
+                bg = AHQ.canvas.rect(x, y, width, height);
+                grid = AHQ.canvas.rect(x, y, width, height);
+                if (this.display === true){
+                    bg.attr({fill: "#fff", fillOpacity:0.3});
+                    grid.attr({fill: AHQ.pattern.grey(), fillOpacity:0.3})
+                }
                 this.g = AHQ.canvas.g(bg,grid);
                 if (AHQ.the_o_g == null){
                 }
@@ -207,7 +219,7 @@
                     delete AHQ.registry_placeholders[this.g.id];
                 }
             }
-            return new Placeholder(x,y,width,height);
+            return new Placeholder(x,y,width,height, display);
         },
         test_placement: function(x, y, width, height, test_placeholders){
             /* Take dimensions of potential new tile and check if it overlaps
@@ -220,10 +232,10 @@
                                        (y*AHQ.options.scale)+1, 
                                        (width*AHQ.options.scale)-2, 
                                        (height*AHQ.options.scale)-2).attr(AHQ.options.placeholders);
-            console.info('Placeholder test tile: ' + new_tile)
+            //console.info('Placeholder test tile: ' + new_tile)
             b1 = new_tile.getBBox();
-            console.info('Placeholder bbox is:')
-            console.info(b1)
+            //console.info('Placeholder bbox is:')
+            //console.info(b1)
             if(x < 0 || y < 0){
                 new_tile.remove();
                 return 'off map';
@@ -232,10 +244,10 @@
                 if (key != AHQ.the_o_g.id){
                     if(Snap.path.isBBoxIntersect(b1, AHQ.registry_tiles[key].g.getBBox())){
                         new_tile.remove();
-                        console.info('The new tile would overlap an existing tile')
-                        console.info(AHQ.registry_tiles[key])
-                        console.info(AHQ.registry_tiles[key].g.getBBox())
-                        console.warn('OG id is ' + AHQ.the_o_g.id + ' and the blocker id is ' + key)
+                        //console.info('The new tile would overlap an existing tile')
+                        //console.info(AHQ.registry_tiles[key])
+                        //console.info(AHQ.registry_tiles[key].g.getBBox())
+                        //console.warn('OG id is ' + AHQ.the_o_g.id + ' and the blocker id is ' + key)
                         return key;
                     }
                 } else {
@@ -305,9 +317,98 @@
     }
     AHQ.DungeonTile = DungeonTile;
 
+    function Mob(){
+        this.x = 0;
+        this.y = 0;
+        this.transform_x = 0;
+        this.transform_y = 0;
+        this.draw = function(){
+            this.g = AHQ.canvas.rect((this.x * AHQ.options.scale)+1,
+                                     (this.y * AHQ.options.scale)+1, 
+                                     AHQ.options.scale-2, 
+                                     AHQ.options.scale-2).attr({fill: "#0F0"})
+            if (AHQ.the_o_g == null){
+                AHQ.the_o_g = this.g
+            }
+            else{
+                AHQ.the_o_g.add(this.g)
+            }
+        }
+        this.move = function(x,y){
+            this.transform_x += x;
+            this.transform_y += y;
+            target_x = this.x+x;
+            target_y = this.y+y;
+            AHQ.gt.x += x; AHQ.gt.y += y;
+            
+            if(AHQ.the_map.can_move_to(this, target_x, target_y)){
+                stack = AHQ.the_map.get(target_x, target_y)
+                for(i=0; i<stack.length; i++){
+                    try{
+                        stack[i].visit();
+                    }
+                    catch(ex){
+                        console.error(ex)
+                        console.error("on_tile is " + on_tile)
+                        console.error("If we're on a placeholder, no biggie - shouldn't be here anyway")
+                    }
+                }
+                this.x = target_x;
+                this.y = target_y;
+                //this.g.transform('t'+this.transform_x*AHQ.options.scale+','+this.transform_y*AHQ.options.scale);
+                AHQ.the_o_g.animate({transform:'translate('+(this.transform_x*AHQ.options.scale)*-1+','+(this.transform_y*AHQ.options.scale)*-1+')'},
+                                    100)//, mina.easeout)
+                AHQ.canvas.append(this.g)
+            } else {
+                this.transform_x -= x;
+                this.transform_y -= y;
+                AHQ.gt.x -= x; AHQ.gt.y -= y;
+            }
 
+        }
+    }
+    AHQ.Mob = Mob;
 
+    function Hero(){
+        AHQ.Mob.call(this)
+        this.x = AHQ.options.start_x;
+        this.y = AHQ.options.start_y;
+    }
+    Hero.prototype = Object.create(AHQ.Mob.prototype);
+    Hero.prototype.constructor = Hero;
+    AHQ.Hero = Hero;
 
+    function JunctionConnector(parent_obj, relation){
+        // JunctionConnector is invisible and just lays over the ends of junctions so we can pass through
+        // relation is either N,S,E, or W
+        // if it's S of parent, then our x is parent_obj.x, our y is parent_obj.y+1
+        DungeonTile.call(this, parent_obj, relation);
+        switch(relation.toLowerCase()){
+            case 'n':
+                this.x = parent_obj.x
+                this.y = parent_obj.y - 1
+                break;
+            case 's':
+                this.x = parent_obj.x
+                this.y = parent_obj.y + 1
+                break;
+            case 'e':
+                this.x = parent_obj.x + 1
+                this.y = parent_obj.y
+                break;
+            case 'w':
+                this.x = parent_obj.x - 1
+                this.y = parent_obj.y
+                break;
+        }
+        this.width=2
+        this.height=2
+        this.visit = function(){}
+        this.draw = function(){}
+    }
+    JunctionConnector.prototype = Object.create(DungeonTile.prototype);
+    JunctionConnector.prototype.constructor = JunctionConnector;
+    AHQ.JunctionConnector = JunctionConnector;
 
     function Junction(parent_obj, relation, type){
         /* A Junction is a DungeonTile which connects Corridors. It can
@@ -327,6 +428,8 @@
         // Wall/Exit locations
         this.north = this.south = this.east = this.west = 'unknown';
         /* Determine Junction Type, which will tell us what exits we need */
+        this.width = 2;
+        this.height = 2;
         if(!parent_obj){
             // no parent - must be entrance, so it's a "Stairs-Out"
             this.type = 'out';
@@ -373,9 +476,10 @@
                 this.east = this.parent;
                 break;
             }
+            cnx = new AHQ.JunctionConnector(this, this.of_parent == 's'?'n': this.of_parent=='n'? 's': this.of_parent=='w'? 'e' : 'w')
+            //console.debug(cnx)
+            AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
         }
-        this.width = 2;
-        this.height = 2;
         if(this.type.toLowerCase() == 'out' || this.type.toLowerCase() == 'down' || this.type.toLowerCase() == 'end'){
             switch(this.of_parent.toLowerCase()){
             case 'n':
@@ -460,28 +564,28 @@
             ph_y = this.y - 7;
             ph_width = 2;
             ph_height = 7;
-            this.north = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height);
+            this.north = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height, true);
         }
         if(this.south == 'unknown'){
             ph_x = this.x;
             ph_y = this.y + 2;
             ph_width = 2;
             ph_height = 7;
-            this.south = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height);
+            this.south = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height, true);
         }
         if(this.east == 'unknown'){
             ph_x = this.x + 2;
             ph_y = this.y;
             ph_width = 7;
             ph_height = 2;
-            this.east = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height);
+            this.east = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height, true);
         }
         if(this.west == 'unknown'){
             ph_x = this.x - 7;
             ph_y = this.y;
             ph_width = 7;
             ph_height = 2;
-            this.west = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height);
+            this.west = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height, true);
         }
         // Object Methods
         this.draw = function(){
@@ -507,7 +611,7 @@
             else{
                 AHQ.the_o_g.add(this.g)
             }
-            
+
             if(this.type == 'out'){
                 AHQ.annotate(this, 'O');
             }
@@ -531,6 +635,7 @@
             //console.info('after everything')
             //console.info(this.g.getBBox())
             this.drawn = true;
+            AHQ.the_map.place_tile(this.x, this.y, this)
             this.g.click(function(evt){
                 /* in this click handler, 'this' is actually the SVG element,
                 NOT the Junction object. Get the Junction from the registry
@@ -564,10 +669,14 @@
                     this.north = null;
                     this.g.add(AHQ.canvas.path(this.wall_north).attr(AHQ.options.walls))
                 } else {
+                    cnx = new AHQ.JunctionConnector(this, 'n')
+                    AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
                     this.north.draw();
                 }
             } else if (this.north && this.north.constructor.name == 'Corridor'){
                 /* Already have a corridor here, just draw it.*/
+                cnx = new AHQ.JunctionConnector(this, 'n')
+                AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
                 this.north.draw();
             }
             if(this.south && this.south.constructor.name == 'Placeholder'){
@@ -580,10 +689,14 @@
                     this.south = null;
                     this.g.add(AHQ.canvas.path(this.wall_south).attr(AHQ.options.walls))
                 } else {
+                    cnx = new AHQ.JunctionConnector(this, 's')
+                    AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
                     this.south.draw();
                 }
             } else if (this.south && this.south.constructor.name == 'Corridor'){
                 /* Already have a corridor here, just draw it.*/
+                cnx = new AHQ.JunctionConnector(this, 's')
+                AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
                 this.south.draw();
             }
             if(this.east && this.east.constructor.name == 'Placeholder'){
@@ -596,10 +709,14 @@
                     this.east = null;
                     this.g.add(AHQ.canvas.path(this.wall_east).attr(AHQ.options.walls))
                 } else {
+                    cnx = new AHQ.JunctionConnector(this, 'e')
+                    AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
                     this.east.draw()
                 };
             } else if (this.east && this.east.constructor.name == 'Corridor'){
                 /* Already have a corridor here, just draw it.*/
+                cnx = new AHQ.JunctionConnector(this, 'e')
+                AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
                 this.east.draw();
             }
             if(this.west && this.west.constructor.name == 'Placeholder'){
@@ -612,10 +729,14 @@
                     this.west = null;
                     this.g.add(AHQ.canvas.path(this.wall_west).attr(AHQ.options.walls))
                 } else {
+                    cnx = new AHQ.JunctionConnector(this, 'w')
+                    AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
                     this.west.draw();
                 }
             } else if (this.west && this.west.constructor.name == 'Corridor'){
                 /* Already have a corridor here, just draw it.*/
+                cnx = new AHQ.JunctionConnector(this, 'w')
+                AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
                 this.west.draw();
             }
             AHQ.bring_doors_to_front();
@@ -825,6 +946,7 @@
                 }
             }
             this.drawn = true;
+            AHQ.the_map.place_tile(this.x, this.y, this)
         }
         this.visit = function(){}
         this.remove = function(){
@@ -852,17 +974,62 @@
         DungeonTile.call(this, parent_obj, relation);
         // inspect parent and collect 'valid' door locations (all)
         this.valid_locations = []
-        // this.parent is the corridor - of_parent will tell us direction of
-        // the corridor. N/S corridor can only have doors on E or W wall, etc
-        if(this.parent.of_parent == 'n' || this.parent.of_parent == 's'){
-            for(x = this.parent.height-1; x >= 0; x--){
-                this.valid_locations.push('e_'+x);
-                this.valid_locations.push('w_'+x);
+        
+        if(this.parent.constructor == AHQ.Corridor){
+            // this.parent is the corridor - of_parent will tell us direction of
+            // the corridor. N/S corridor can only have doors on E or W wall, etc
+            if(this.parent.of_parent == 'n' || this.parent.of_parent == 's'){
+                for(x = this.parent.height-1; x >= 0; x--){
+                    this.valid_locations.push('e_'+x);
+                    this.valid_locations.push('w_'+x);
+                }
+            } else {
+                for(x = this.parent.width-1; x >= 0; x--){
+                    this.valid_locations.push('n_'+x);
+                    this.valid_locations.push('s_'+x);
+                }
             }
-        } else {
-            for(x = this.parent.width-1; x >= 0; x--){
-                this.valid_locations.push('n_'+x);
-                this.valid_locations.push('s_'+x);
+        } else if (this.parent.constructor == AHQ.Room){
+            // Room.of_parent tells us which wall will already have a door in it
+            //   'n' means the south wall, 'e' means the west wall, 
+            //   's' means the north wall, 'w' means the east wall
+            switch(this.parent.of_parent){
+                case 'n':
+                    for(x = this.parent.width-1; x >= 0; x--){
+                        this.valid_locations.push('n_'+x);
+                    }
+                    for(x = this.parent.height-1; x >= 0; x--){
+                        this.valid_locations.push('e_'+x);
+                        this.valid_locations.push('w_'+x);
+                    }
+                    break;
+                case 'e':
+                    for(x = this.parent.width-1; x >= 0; x--){
+                        this.valid_locations.push('n_'+x);
+                        this.valid_locations.push('s_'+x);
+                    }
+                    for(x = this.parent.height-1; x >= 0; x--){
+                        this.valid_locations.push('e_'+x);
+                    }
+                    break;
+                case 's':
+                    for(x = this.parent.width-1; x >= 0; x--){
+                        this.valid_locations.push('s_'+x);
+                    }
+                    for(x = this.parent.height-1; x >= 0; x--){
+                        this.valid_locations.push('e_'+x);
+                        this.valid_locations.push('w_'+x);
+                    }
+                    break;
+                case 'w':
+                    for(x = this.parent.width-1; x >= 0; x--){
+                        this.valid_locations.push('n_'+x);
+                        this.valid_locations.push('s_'+x);
+                    }
+                    for(x = this.parent.height-1; x >= 0; x--){
+                        this.valid_locations.push('w_'+x);
+                    }
+                    break;
             }
         }
         // loop through all doors already attached to parent
@@ -893,17 +1060,24 @@
                 this.of_parent = door_location[0];
                 if(this.of_parent == 'n'){
                     this.x = this.parent.x + parseInt(door_location.split('_')[1]);
-                    this.y = this.parent.y;
-                
+                    this.y = this.parent.y-1;
+                    this.width = 1;
+                    this.height = 2;
                 } else if(this.of_parent == 's'){
                     this.x = this.parent.x + parseInt(door_location.split('_')[1])
-                    this.y = this.parent.y + this.parent.height;
+                    this.y = this.parent.y + this.parent.height-1;
+                    this.width = 1;
+                    this.height = 2;
                 } else if(this.of_parent == 'e'){
-                    this.x = this.parent.x + this.parent.width;
+                    this.x = this.parent.x + this.parent.width-1;
                     this.y = this.parent.y + parseInt(door_location.split('_')[1])
+                    this.width = 2;
+                    this.height = 1;
                 } else if(this.of_parent == 'w'){
-                    this.x = this.parent.x;
+                    this.x = this.parent.x-1;
                     this.y = this.parent.y + parseInt(door_location.split('_')[1])
+                    this.width = 2;
+                    this.height = 1;
                 }
             }
             random_tries = 10;
@@ -946,14 +1120,14 @@
                 if(AHQ.test_placement(this.room_ph_x, this.room_ph_y, this.room_ph_width, this.room_ph_height) != null){
                     //this.valid_locations.splice(this.valid_locations.indexOf(door_location),1)
                     //door_location = null;
-                    console.debug('Fitting a room behind door at ' + door_location )
+                    //console.debug('Fitting a room behind door at ' + door_location )
                     it_fits = false
                 } else {
                     it_fits = true;
                 }
             }
             if(!it_fits){
-                console.debug('tried a bunch of times to get a room to fit at ' + door_location + ' to no avail')
+                //console.debug('tried a bunch of times to get a room to fit at ' + door_location + ' to no avail')
                 this.valid_locations.splice(this.valid_locations.indexOf(door_location),1)
                 door_location = null;
             }
@@ -980,20 +1154,20 @@
             }
             switch (this.of_parent){
             case 'n':
-                y_scaled = (this.y*AHQ.options.scale)-AHQ.options.scale/2;
+                y_scaled = ((this.y+1)*AHQ.options.scale)-AHQ.options.scale/2;
                 x_scaled = (this.x*AHQ.options.scale);
                 break;
             case 's':
-                y_scaled = (this.y*AHQ.options.scale)-AHQ.options.scale/2;
+                y_scaled = ((this.y+1)*AHQ.options.scale)-AHQ.options.scale/2;
                 x_scaled = (this.x*AHQ.options.scale);
                 break;
             case 'e':
                 y_scaled = (this.y*AHQ.options.scale);
-                x_scaled = (this.x*AHQ.options.scale)-AHQ.options.scale/2;
+                x_scaled = ((this.x+1)*AHQ.options.scale)-AHQ.options.scale/2;
                 break;
             case 'w':
                 y_scaled = (this.y*AHQ.options.scale);
-                x_scaled = (this.x*AHQ.options.scale)-AHQ.options.scale/2;
+                x_scaled = ((this.x+1)*AHQ.options.scale)-AHQ.options.scale/2;
                 break;
             }
             bg = AHQ.canvas.rect(x_scaled, y_scaled, AHQ.options.scale, AHQ.options.scale).attr(AHQ.options.doors);
@@ -1012,9 +1186,10 @@
                 AHQ.the_o_g.add(this.g)
             }
 
-            this.room_ph = AHQ.make_placeholder(this.room_ph_x, this.room_ph_y, this.room_ph_width, this.room_ph_height);
+            this.room_ph = AHQ.make_placeholder(this.room_ph_x, this.room_ph_y, this.room_ph_width, this.room_ph_height, false);
             AHQ.registry_doors[this.g.id] = this;
             this.drawn = true;
+            AHQ.the_map.place_tile(this.x, this.y, this)
             this.g.click(function(evt){
                 d = AHQ.registry_doors[this.id];
                 d.visit();
@@ -1071,7 +1246,9 @@
         this.y = y;
         this.width = w;
         this.height = h;
-        this.room_type = room_type
+        this.room_type = room_type;
+        this.of_parent = relation;
+        this.doors = []
         this.draw = function(){
             // figures out if it has doors and where they are
             //  (leave it up to the door to decide what's beind it)
@@ -1109,7 +1286,22 @@
                 AHQ.the_o_g.add(this.g)
             }
             AHQ.registry_tiles[this.g.id] = this;
+
+            // Figure out how many ADDITIONAL doors there are in this room (already has 1)
+            num_additional_doors = AHQ.get_room_doors();
+            //console.debug(num_additional_doors + ' additional doors in this room')
+            // Place the additional doors
+            // this.of_parent is wehre the existing door is, so choose other three walls
+            while(num_additional_doors>0){
+                d = new AHQ.Door(this);
+                if(d.chosen_loc != null){
+                    this.doors.push(d);
+                    d.draw();
+                }
+                num_additional_doors--;
+            }
             this.drawn = true;
+            AHQ.the_map.place_tile(this.x, this.y, this)
         }
         this.visit = function(){
             // do nothing special
@@ -1118,57 +1310,165 @@
     Room.prototype = Object.create(DungeonTile.prototype);
     Room.prototype.constructor = Room;
     AHQ.Room = Room;
-
-
-
-    function Hero(){
-        this.x = AHQ.options.start_x;
-        this.y = AHQ.options.start_y;
-        this.transform_x = 0;
-        this.transform_y = 0;
-        this.draw = function(){
-            this.g = AHQ.canvas.rect((this.x * AHQ.options.scale)+1,
-                                     (this.y * AHQ.options.scale)+1, 
-                                     AHQ.options.scale-2, 
-                                     AHQ.options.scale-2).attr({fill: "#0F0"})
-            if (AHQ.the_o_g == null){
-                AHQ.the_o_g = this.g
+    
+    function TileSpace(width, height){
+        this.width = width;
+        this.height = height;
+        this.__data__ = Array(this.width * this.height)
+        this.push = function(x, y, val){
+            // push the val into stack at position (x,y)
+            // Each item is a stack/array - initially undefined
+            if(x>this.width-1 || x<0 
+                || y>this.height-1 || y<0){
+                return undefined
             }
-            else{
-                AHQ.the_o_g.add(this.g)
+            p = (this.width * y) + x
+            if(this.__data__[p] === undefined){
+                this.__data__[p] = [val]
+            } else {
+                this.__data__[p].push(val);
+            }
+            return this.__data__[p]
+        }
+        this.set = function(x, y, val){
+            // set the val at position (x,y) overwriting the stack
+            if(x>this.width-1 || x<0 
+                || y>this.height-1 || y<0){
+                return undefined
+            }
+            p = (this.width * y) + x
+            this.__data__[p] = val
+            return this.__data__[p]
+        }
+        this.place_tile = function(x, y, tile){
+            // place a tile - x,y is top-right corner of the BOUNDING BOX of the tile
+            // *** NO CHECKING!!! *** This function does NOT check if it's valid to place
+            // a tile here - that logic should live elsewhere
+            if( tile instanceof AHQ.DungeonTile == false){
+                console.error(tile)
+                throw TypeError('place_tile requires a DungeonTile as argument');
+            }
+            if(x>this.width-1 || x<0 
+                || y>this.height-1 || y<0){
+                //throw RangeError('Position (' + x + ', ' + y + ') is Off Map!')
+                console.debug('Position (' + x + ', ' + y + ') is Off Map!')
+                return
+            }
+            if(x+tile.width-1 > this.width-1 || y+tile.height-1 > this.height-1){
+                //throw RangeError('Tile of size ' + tile.width + 'x' + tile.height + ' does not fit on map at '
+                //                 + '(' + x + ',' + y + ')')
+                console.debug(('Tile of size ' + tile.width + 'x' + tile.height + ' does not fit on map at '
+                                 + '(' + x + ',' + y + ')'))
+                return
+            }
+            // tile should fit, so loop through tile width and height, pushing tile onto stack
+            for(this_y = y; this_y < y+tile.height; this_y++){
+                for(this_x = x; this_x < x+tile.width; this_x++){
+                    this.push(this_x, this_y, tile)
+                }
             }
         }
-        this.move = function(x,y){
-            this.transform_x += x;
-            this.transform_y += y;
-            AHQ.gt.x += x; AHQ.gt.y += y;
-            on_tile = AHQ.test_placement(this.x+this.transform_x, this.y+this.transform_y, 1, 1, false);
-            if(on_tile != null){
-                try{
-                    AHQ.registry_tiles[on_tile].visit()
+        this.get = function(x, y){
+            if(x>this.width-1 || x<0 
+                || y>this.height-1 || y<0){
+                return undefined
+            }
+            return this.__data__[(this.width * y) + x]
+        }
+        this.get_section = function(x, y, w, h){
+            // Returns a subsection of this.__data__ starting at x,y, with the given width and height
+            // if the requested section runs off the edge of this.__data__, those positions will
+            // be populated with [false] (undefined would mean it's available)
+            new_ts = new TileSpace(w,h)
+            for(y2 = y; y2 < y+h; y2++){
+                // y2 is current loc in __data__
+                console.debug('y2 is now ' + y2)
+                for(x2 = x; x2 < x+w; x2++){
+                    console.debug('x2 is now ' + x2)
+                    if(x2>=this.width || y2 >= this.height){
+                        // off map, give false
+                        new_ts.set(x2-x, y2-y, false)
+                    } else {
+                        new_ts.set(x2-x, y2-y, this.get(x2, y2))
+                    }
                 }
-                catch(ex){
-                    console.error(ex)
-                    console.error("on_tile is " + on_tile)
-                    console.error("If we're on a placeholder, no biggie - shouldn't be here anyway")
+            }
+            return new_ts
+        }
+        this.can_move_to = function(mob, target_x, target_y){
+            // mob is anything that can move (hero, NPC, or monster)
+            // target_x, target_y is where they want to move TO
+            // the mob will have its own (x,y) which we will inspect
+            // assert x-1 == target_x || x+1 == target_x || x == target_x
+            // assert y-1 == target_y || y+1 == target_y || y == target_y
+            // target_x,target_y must have a tile in stack
+            // target_x,target_y and mob.x,mob.y must have SAME time in stack
+            // target_x,target_y must NOT have a mob in stack
+            //console.debug('can_move_to called with mob.x: ' + mob.x + ', mob.y: ' + mob.y + ', target_x: ' + target_x + ' target_y: ' + target_y)
+            if( mob instanceof AHQ.Mob == false){
+                console.error(mob)
+                throw TypeError('can_move_to requires a Mob as argument');
+            }
+            if( ! ((mob.x-1 == target_x || mob.x+1 == target_x || mob.x == target_x) &&
+                   (mob.y-1 == target_y || mob.y+1 == target_y || mob.y == target_y))) {
+                console.error(mob)
+                console.error('Moving too far - target is(' + target_x + ', ' + target_y + ')')
+                return false
+            }
+            if( target_x < 0 || target_x > this.width+1 || target_y < 0 || target_y > this.height+1){
+                console.error(mob)
+                console.error('Off-Map - target is(' + target_x + ', ' + target_y + ')')
+                return false
+            }
+            // loop through all items in stack at target position. Check if DungeonTiles are ALSO
+            // in mobs current position stack. If any item is another mob, can't move there.
+            target = this.get(target_x, target_y)
+            current_pos = this.get(mob.x, mob.y)
+            if(target){
+                // target can be undefined or false
+                for(i=0; i<target.length; i++){
+                    obj = target[i]
+                    if(obj instanceof AHQ.Mob){
+                        // cannot move onto other mobs
+                        return false;
+                    }
+                    if(obj instanceof AHQ.DungeonTile){
+                        // If this tile is also in the current position, we're good to go there
+                        if(current_pos.includes(obj)){
+                            return true;
+                        }
+                    }
                 }
-                //this.g.transform('t'+this.transform_x*AHQ.options.scale+','+this.transform_y*AHQ.options.scale);
-                AHQ.the_o_g.animate({transform:'translate('+(this.transform_x*AHQ.options.scale)*-1+','+(this.transform_y*AHQ.options.scale)*-1+')'},
-                                    100)//, mina.easeout)
-                AHQ.canvas.append(this.g)
+                return false;
             } else {
-                this.transform_x -= x;
-                this.transform_y -= y;
-                AHQ.gt.x -= x; AHQ.gt.y -= y;
+                return false
+            }
+        }
+        this.delete = function(){
+            // if we have a section of a larger TileSpace, then we could have a bunch of references
+            // to the same stack objects, which.. I guess is fine? They all point to the same things
+            // but just in case we're done with a section, delete it. Maybe it'll help?
+            delete this.__data__
+            delete this.width
+            delete this.height
+        }
+        this.demo = function(){
+            for(y=0; y<this.height; y++){
+                console.debug('y is now ' + y)
+                for(x=0; x<this.width; x++){
+                    console.debug('x is now ' + x)
+                    this.push(x,y, '(' + x + ', ' + y + ')');
+                }
             }
         }
     }
-    AHQ.Hero = Hero;
-    
+    AHQ.TileSpace = TileSpace
+
     $(function(){
         var s = Snap("#svg");
-        s.attr({ viewBox: "0 0 968 600"});
         AHQ.canvas = s;
+        s.attr({ viewBox: "0 0 "+AHQ.options.max_x*AHQ.options.scale+" "+AHQ.options.max_y*AHQ.options.scale});
+        AHQ.the_map = new AHQ.TileSpace(AHQ.options.max_x, AHQ.options.max_y)
         dungeon_entry = new AHQ.Junction()
         dungeon_entry.south.remove();
         dungeon_entry.draw();
@@ -1229,5 +1529,22 @@
         })
     })
     
+function Super(){
+    this.val = 1
+}
+Super.prototype.method = function(){
+    console.debug('Super.method() was called')
+}
+
+function Sub(){
+    this.val = 2
+    Super.call(this)
+}
+Sub.prototype = Object.create(Super.prototype);
+Sub.prototype.method = function(){
+    console.info(Object.getPrototypeOf(Sub.prototype).method.call(this))
+    console.debug('Sub.method() was called')
+}
+Sub.prototype.constructor = Sub;
     </script>
 </html>
