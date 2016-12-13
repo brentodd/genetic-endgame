@@ -10,7 +10,7 @@
         #svg {
             border: solid 2px #ccc;
             background-color: #000;
-            width: 500;
+            /*width: 600;*/
             height: auto;
             display:block;
             float: left;
@@ -37,9 +37,9 @@
         the_map: null,
         the_o_g: null,
         gt: {x:0, y:0}, //gt == global translate, x and y are current translate
-        options: {scale: 10,  // square size in pixels
+        options: {scale: 12,  // square size in pixels
                   fontSize: 12,
-                  max_x: 50,    // Maximum width of the map (E-W)
+                  max_x: 80,    // Maximum width of the map (E-W)
                   max_y: 65,    // Maximum height of the map (N-S)
                   start_x: 24,  // X of starting square of dungeon
                   start_y: 12,  // Y of starting square of dungeon
@@ -355,9 +355,8 @@
                 }
                 this.x = target_x;
                 this.y = target_y;
-                //this.g.transform('t'+this.transform_x*AHQ.options.scale+','+this.transform_y*AHQ.options.scale);
-                AHQ.the_o_g.animate({transform:'translate('+(this.transform_x*AHQ.options.scale)*-1+','+(this.transform_y*AHQ.options.scale)*-1+')'},
-                                    100)//, mina.easeout)
+                this.g.animate({transform:'t'+this.transform_x*AHQ.options.scale+','+this.transform_y*AHQ.options.scale}, 75);
+                //AHQ.the_o_g.animate({transform:'translate('+(this.transform_x*AHQ.options.scale)*-1+','+(this.transform_y*AHQ.options.scale)*-1+')'}, 100)//, mina.easeout)
                 AHQ.canvas.append(this.g)
             } else {
                 this.transform_x -= x;
@@ -425,6 +424,7 @@
         
         */
         DungeonTile.call(this, parent_obj, relation);
+        this.visited = false;
         // Wall/Exit locations
         this.north = this.south = this.east = this.west = 'unknown';
         /* Determine Junction Type, which will tell us what exits we need */
@@ -658,86 +658,89 @@
         }
         this.visit = function(){
             /* Generate new corridor for each exit, then immediately draw them */
-            if(this.north && this.north.constructor.name == 'Placeholder'){
-                /* Remove any placeholder corridor, and build a new corridor.*/
-                delete AHQ.registry_placeholders[this.north.g.id];
-                this.north.g.remove();
-                this.north = new AHQ.Corridor(this, 'n');
-                if(this.north.height <= 0){
-                    // corridor constructor couldn't make anything fit, wall it
-                    this.north.remove();
-                    this.north = null;
-                    this.g.add(AHQ.canvas.path(this.wall_north).attr(AHQ.options.walls))
-                } else {
+            if(! this.visited){
+                if(this.north && this.north.constructor.name == 'Placeholder'){
+                    /* Remove any placeholder corridor, and build a new corridor.*/
+                    delete AHQ.registry_placeholders[this.north.g.id];
+                    this.north.g.remove();
+                    this.north = new AHQ.Corridor(this, 'n');
+                    if(this.north.height <= 0){
+                        // corridor constructor couldn't make anything fit, wall it
+                        this.north.remove();
+                        this.north = null;
+                        this.g.add(AHQ.canvas.path(this.wall_north).attr(AHQ.options.walls))
+                    } else {
+                        cnx = new AHQ.JunctionConnector(this, 'n')
+                        AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
+                        this.north.draw();
+                    }
+                } else if (this.north && this.north.constructor.name == 'Corridor'){
+                    /* Already have a corridor here, just draw it.*/
                     cnx = new AHQ.JunctionConnector(this, 'n')
                     AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
                     this.north.draw();
                 }
-            } else if (this.north && this.north.constructor.name == 'Corridor'){
-                /* Already have a corridor here, just draw it.*/
-                cnx = new AHQ.JunctionConnector(this, 'n')
-                AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
-                this.north.draw();
-            }
-            if(this.south && this.south.constructor.name == 'Placeholder'){
-                /* Remove any placeholder corridor, and build a new corridor.*/
-                delete AHQ.registry_placeholders[this.south.g.id];
-                this.south.g.remove();
-                this.south = new AHQ.Corridor(this, 's');
-                if(this.south.height <= 0){
-                    this.south.remove();
-                    this.south = null;
-                    this.g.add(AHQ.canvas.path(this.wall_south).attr(AHQ.options.walls))
-                } else {
+                if(this.south && this.south.constructor.name == 'Placeholder'){
+                    /* Remove any placeholder corridor, and build a new corridor.*/
+                    delete AHQ.registry_placeholders[this.south.g.id];
+                    this.south.g.remove();
+                    this.south = new AHQ.Corridor(this, 's');
+                    if(this.south.height <= 0){
+                        this.south.remove();
+                        this.south = null;
+                        this.g.add(AHQ.canvas.path(this.wall_south).attr(AHQ.options.walls))
+                    } else {
+                        cnx = new AHQ.JunctionConnector(this, 's')
+                        AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
+                        this.south.draw();
+                    }
+                } else if (this.south && this.south.constructor.name == 'Corridor'){
+                    /* Already have a corridor here, just draw it.*/
                     cnx = new AHQ.JunctionConnector(this, 's')
                     AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
                     this.south.draw();
                 }
-            } else if (this.south && this.south.constructor.name == 'Corridor'){
-                /* Already have a corridor here, just draw it.*/
-                cnx = new AHQ.JunctionConnector(this, 's')
-                AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
-                this.south.draw();
-            }
-            if(this.east && this.east.constructor.name == 'Placeholder'){
-                /* Remove any placeholder corridor, and build a new corridor.*/
-                delete AHQ.registry_placeholders[this.east.g.id];
-                this.east.g.remove();
-                this.east = new AHQ.Corridor(this, 'e');
-                if(this.east.width <= 0){
-                    this.east.remove();
-                    this.east = null;
-                    this.g.add(AHQ.canvas.path(this.wall_east).attr(AHQ.options.walls))
-                } else {
+                if(this.east && this.east.constructor.name == 'Placeholder'){
+                    /* Remove any placeholder corridor, and build a new corridor.*/
+                    delete AHQ.registry_placeholders[this.east.g.id];
+                    this.east.g.remove();
+                    this.east = new AHQ.Corridor(this, 'e');
+                    if(this.east.width <= 0){
+                        this.east.remove();
+                        this.east = null;
+                        this.g.add(AHQ.canvas.path(this.wall_east).attr(AHQ.options.walls))
+                    } else {
+                        cnx = new AHQ.JunctionConnector(this, 'e')
+                        AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
+                        this.east.draw()
+                    };
+                } else if (this.east && this.east.constructor.name == 'Corridor'){
+                    /* Already have a corridor here, just draw it.*/
                     cnx = new AHQ.JunctionConnector(this, 'e')
                     AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
-                    this.east.draw()
-                };
-            } else if (this.east && this.east.constructor.name == 'Corridor'){
-                /* Already have a corridor here, just draw it.*/
-                cnx = new AHQ.JunctionConnector(this, 'e')
-                AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
-                this.east.draw();
-            }
-            if(this.west && this.west.constructor.name == 'Placeholder'){
-                /* Remove any placeholder corridor, and build a new corridor.*/
-                delete AHQ.registry_placeholders[this.west.g.id];
-                this.west.g.remove();
-                this.west = new AHQ.Corridor(this, 'w');
-                if(this.west.width <= 0){
-                    this.west.remove();
-                    this.west = null;
-                    this.g.add(AHQ.canvas.path(this.wall_west).attr(AHQ.options.walls))
-                } else {
+                    this.east.draw();
+                }
+                if(this.west && this.west.constructor.name == 'Placeholder'){
+                    /* Remove any placeholder corridor, and build a new corridor.*/
+                    delete AHQ.registry_placeholders[this.west.g.id];
+                    this.west.g.remove();
+                    this.west = new AHQ.Corridor(this, 'w');
+                    if(this.west.width <= 0){
+                        this.west.remove();
+                        this.west = null;
+                        this.g.add(AHQ.canvas.path(this.wall_west).attr(AHQ.options.walls))
+                    } else {
+                        cnx = new AHQ.JunctionConnector(this, 'w')
+                        AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
+                        this.west.draw();
+                    }
+                } else if (this.west && this.west.constructor.name == 'Corridor'){
+                    /* Already have a corridor here, just draw it.*/
                     cnx = new AHQ.JunctionConnector(this, 'w')
                     AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
                     this.west.draw();
                 }
-            } else if (this.west && this.west.constructor.name == 'Corridor'){
-                /* Already have a corridor here, just draw it.*/
-                cnx = new AHQ.JunctionConnector(this, 'w')
-                AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
-                this.west.draw();
+                this.visited = true;
             }
             AHQ.bring_doors_to_front();
         }
@@ -974,6 +977,7 @@
         DungeonTile.call(this, parent_obj, relation);
         // inspect parent and collect 'valid' door locations (all)
         this.valid_locations = []
+        this.visited = false;
         
         if(this.parent.constructor == AHQ.Corridor){
             // this.parent is the corridor - of_parent will tell us direction of
@@ -1198,34 +1202,37 @@
         this.visit = function(){
             /* Remove the placeholder, then REDO all of the room generation
             crap, but with a random room type. */
-            this.room_ph.remove();
-            rt = AHQ.get_room_type();
-            // decide dimensions
-            if(rt == 'l' || rt == 'q'){
-                room_dimension_1 = 10;
-                room_dimension_2 = 5;
-            } else {
-                room_dimension_1 = 5;
-                room_dimension_2 = 5;
-            }
-            placement_attempts = 10;
-            while(placement_attempts >= 0){
-                placement_attempts--;
-                if(this.place_room_beyond(this.chosen_loc, room_dimension_1, room_dimension_2) != null){
-                    // make a room
-                    room = new AHQ.Room(this, this.of_parent,
-                                        this.room_ph_x, this.room_ph_y, this.room_ph_width, this.room_ph_height,
-                                        rt);
-                    room.draw()
-                    //AHQ.canvas.rect(this.room_ph_x*AHQ.options.scale, 
-                    //                this.room_ph_y*AHQ.options.scale, 
-                    //                this.room_ph_width*AHQ.options.scale, 
-                    //               this.room_ph_height*AHQ.options.scale).attr({fill:AHQ.pattern.grey()})
-                    break;
+            if(this.visited === false){
+                this.room_ph.remove();
+                rt = AHQ.get_room_type();
+                // decide dimensions
+                if(rt == 'l' || rt == 'q'){
+                    room_dimension_1 = 10;
+                    room_dimension_2 = 5;
+                } else {
+                    room_dimension_1 = 5;
+                    room_dimension_2 = 5;
                 }
+                placement_attempts = 10;
+                while(placement_attempts >= 0){
+                    placement_attempts--;
+                    if(this.place_room_beyond(this.chosen_loc, room_dimension_1, room_dimension_2) != null){
+                        // make a room
+                        room = new AHQ.Room(this, this.of_parent,
+                                            this.room_ph_x, this.room_ph_y, this.room_ph_width, this.room_ph_height,
+                                            rt);
+                        room.draw()
+                        //AHQ.canvas.rect(this.room_ph_x*AHQ.options.scale, 
+                        //                this.room_ph_y*AHQ.options.scale, 
+                        //                this.room_ph_width*AHQ.options.scale, 
+                        //               this.room_ph_height*AHQ.options.scale).attr({fill:AHQ.pattern.grey()})
+                        break;
+                    }
+                }
+                // loop 10 times testing placement
+                // if it fits, we're done. if not, remove the door
+                this.visited = true;
             }
-            // loop 10 times testing placement
-            // if it fits, we're done. if not, remove the door
         }
         this.remove = function(){}
     }
