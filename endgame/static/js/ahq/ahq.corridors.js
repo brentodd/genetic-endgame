@@ -220,7 +220,7 @@ function Corridor(parent_obj, relation, psg_length){
                 w = this.width + 2
                 h = this.height
             }
-            this.placeholder = AHQ.make_placeholder(x,y,w,h,true)
+            this.placeholder = AHQ.make_placeholder(x,y,w,h,false)
         }
     }
     this.draw = function(){
