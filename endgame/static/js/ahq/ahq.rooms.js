@@ -1,18 +1,57 @@
-function Room(parent_obj, relation, x, y, w, h, room_type){
+function Room(parent_obj, relation){
     AHQ.DungeonTile.call(this, parent_obj, relation);
-    // room is made when door is made
-    // door passes in it's location
-    this.x = x;
-    this.y = y;
-    this.width = w;
-    this.height = h;
-    this.room_type = room_type;
+    
+    this.room_type = AHQ.get_room_type()
+    // TODO: update get_room_type so that dimensions are contained in ahq.js
+    if(this.room_type === 'l' || this.room_type === 'q'){
+        if(AHQ.choose([true,false])){
+            this.width = 10;
+            this.height = 5;
+        } else {
+            this.width = 5;
+            this.height = 10;
+        }
+    } else {
+        this.width = 5;
+        this.height = 5;
+    }
     this.of_parent = relation;
-    this.doors = []
+    switch (parent_obj.of_parent){
+        case 'n':
+            this.x = parent_obj.x + AHQ.between((this.width-1)*-1, 0);
+            this.y = parent_obj.y+1 - this.height;
+            break;
+        case 's':
+            this.x = parent_obj.x + AHQ.between((this.width-1)*-1, 0);
+            this.y = parent_obj.y+1;
+            break;
+        case 'e':
+            this.x = parent_obj.x + 1;
+            this.y = parent_obj.y - AHQ.between((this.height-1), 0);
+            break;
+        case 'w':
+            this.x = parent_obj.x + 1 - this.width;
+            this.y = parent_obj.y - AHQ.between((this.height-1), 0);
+            break;
+    }
+    this.doors = [];
+
+    this.make_placeholder = function(){
+        /* Rooms are placed semi-randomly behind doors, and in the process we check if
+        the room will even FIT in the random location. So we don't want to make a 
+        placeholder in the constructor (or it'd block itself). */
+        this.placeholder = AHQ.make_placeholder(this.x,this.y,
+                                                this.width,this.height,
+                                                false)
+    }
+
     this.draw = function(){
         // figures out if it has doors and where they are
         //  (leave it up to the door to decide what's beind it)
         // draw self, draw doors
+        if(this.placeholder){
+            this.placeholder.remove();
+        }
         x_scaled = this.x*AHQ.options.scale;
         y_scaled = this.y*AHQ.options.scale;
         width_scaled = this.width*AHQ.options.scale;
@@ -51,7 +90,7 @@ function Room(parent_obj, relation, x, y, w, h, room_type){
         num_additional_doors = AHQ.get_room_doors();
         //console.debug(num_additional_doors + ' additional doors in this room')
         // Place the additional doors
-        // this.of_parent is wehre the existing door is, so choose other three walls
+        // this.of_parent is where the existing door is, so choose other three walls
         while(num_additional_doors>0){
             d = new AHQ.Door(this);
             if(d.chosen_loc != null){
@@ -65,6 +104,11 @@ function Room(parent_obj, relation, x, y, w, h, room_type){
     }
     this.visit = function(){
         // do nothing special
+    }
+    this.remove = function(){
+        if(this.placeholder){
+            this.placeholder.remove()
+        }
     }
 };
 Room.prototype = Object.create(AHQ.DungeonTile.prototype);

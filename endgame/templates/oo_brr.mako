@@ -46,12 +46,12 @@
         s.attr({ viewBox: "0 0 "+AHQ.options.max_x*AHQ.options.scale+" "+AHQ.options.max_y*AHQ.options.scale});
         AHQ.the_map = new AHQ.TileSpace(AHQ.options.max_x, AHQ.options.max_y)
         dungeon_entry = new AHQ.Junction()
-        dungeon_entry.south.remove();
-        dungeon_entry.draw();
+        //dungeon_entry.south.remove();
         entry_corridor = new AHQ.Corridor(dungeon_entry, 's', 10)
         entry_corridor.end.remove();
         corridor_end = new AHQ.Junction(entry_corridor, 's', 't')
         ragnar = new AHQ.Hero();
+        dungeon_entry.draw()
         ragnar.draw();
         dungeon_entry.visit();
 

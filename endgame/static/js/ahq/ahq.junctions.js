@@ -52,6 +52,7 @@ function Junction(parent_obj, relation, type){
     /* Determine Junction Type, which will tell us what exits we need */
     this.width = 2;
     this.height = 2;
+    this.doors = [];
     if(!parent_obj){
         // no parent - must be entrance, so it's a "Stairs-Out"
         this.type = 'out';
@@ -179,40 +180,42 @@ function Junction(parent_obj, relation, type){
             break;
         }
     }
-    // make placeholders off of each 'unknown' exit.
-    // A placeholder must be 7 squares long
-    if(this.north == 'unknown'){
-        ph_x = this.x;
-        ph_y = this.y - 7;
-        ph_width = 2;
-        ph_height = 7;
-        this.north = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height, true);
-    }
-    if(this.south == 'unknown'){
-        ph_x = this.x;
-        ph_y = this.y + 2;
-        ph_width = 2;
-        ph_height = 7;
-        this.south = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height, true);
-    }
-    if(this.east == 'unknown'){
-        ph_x = this.x + 2;
-        ph_y = this.y;
-        ph_width = 7;
-        ph_height = 2;
-        this.east = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height, true);
-    }
-    if(this.west == 'unknown'){
-        ph_x = this.x - 7;
-        ph_y = this.y;
-        ph_width = 7;
-        ph_height = 2;
-        this.west = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height, true);
-    }
     // Object Methods
     this.draw = function(){
+        console.info('called draw')
         if(this.drawn){
+            console.info('already drawn')
             return
+        }
+        // make placeholders off of each 'unknown' exit.
+        // A placeholder must be 7 squares long
+        if(this.north == 'unknown'){
+            ph_x = this.x;
+            ph_y = this.y - 7;
+            ph_width = 2;
+            ph_height = 7;
+            this.north = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height, true);
+        }
+        if(this.south == 'unknown'){
+            ph_x = this.x;
+            ph_y = this.y + 2;
+            ph_width = 2;
+            ph_height = 7;
+            this.south = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height, true);
+        }
+        if(this.east == 'unknown'){
+            ph_x = this.x + 2;
+            ph_y = this.y;
+            ph_width = 7;
+            ph_height = 2;
+            this.east = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height, true);
+        }
+        if(this.west == 'unknown'){
+            ph_x = this.x - 7;
+            ph_y = this.y;
+            ph_width = 7;
+            ph_height = 2;
+            this.west = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height, true);
         }
         x_scaled = this.x*AHQ.options.scale;
         y_scaled = this.y*AHQ.options.scale;
@@ -226,7 +229,7 @@ function Junction(parent_obj, relation, type){
         this.wall_south = "M"+x_scaled+","+(y_scaled+height_scaled-wall_nudge)+"L"+(x_scaled+width_scaled)+","+(y_scaled+height_scaled-wall_nudge)
         this.wall_north = "M"+x_scaled+","+(y_scaled+wall_nudge)+"L"+(x_scaled+width_scaled)+","+(y_scaled+wall_nudge)
         this.g = AHQ.canvas.g(bg,grid);
-        //console.info(this.g.getBBox())
+        console.info(this.g)
         if (AHQ.the_o_g == null){
             AHQ.the_o_g = this.g
         }
@@ -295,12 +298,14 @@ function Junction(parent_obj, relation, type){
                     cnx = new AHQ.JunctionConnector(this, 'n')
                     AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
                     this.north.draw();
+                    this.north.visit();
                 }
             } else if (this.north && this.north.constructor.name == 'Corridor'){
                 /* Already have a corridor here, just draw it.*/
                 cnx = new AHQ.JunctionConnector(this, 'n')
                 AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
                 this.north.draw();
+                this.north.visit();
             }
             if(this.south && this.south.constructor.name == 'Placeholder'){
                 /* Remove any placeholder corridor, and build a new corridor.*/
@@ -315,12 +320,14 @@ function Junction(parent_obj, relation, type){
                     cnx = new AHQ.JunctionConnector(this, 's')
                     AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
                     this.south.draw();
+                    this.south.visit();
                 }
             } else if (this.south && this.south.constructor.name == 'Corridor'){
                 /* Already have a corridor here, just draw it.*/
                 cnx = new AHQ.JunctionConnector(this, 's')
                 AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
                 this.south.draw();
+                this.south.visit();
             }
             if(this.east && this.east.constructor.name == 'Placeholder'){
                 /* Remove any placeholder corridor, and build a new corridor.*/
@@ -335,12 +342,14 @@ function Junction(parent_obj, relation, type){
                     cnx = new AHQ.JunctionConnector(this, 'e')
                     AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
                     this.east.draw()
+                    this.east.visit();
                 };
             } else if (this.east && this.east.constructor.name == 'Corridor'){
                 /* Already have a corridor here, just draw it.*/
                 cnx = new AHQ.JunctionConnector(this, 'e')
                 AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
                 this.east.draw();
+                this.east.visit();
             }
             if(this.west && this.west.constructor.name == 'Placeholder'){
                 /* Remove any placeholder corridor, and build a new corridor.*/
@@ -355,12 +364,14 @@ function Junction(parent_obj, relation, type){
                     cnx = new AHQ.JunctionConnector(this, 'w')
                     AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
                     this.west.draw();
+                    this.west.visit();
                 }
             } else if (this.west && this.west.constructor.name == 'Corridor'){
                 /* Already have a corridor here, just draw it.*/
                 cnx = new AHQ.JunctionConnector(this, 'w')
                 AHQ.the_map.place_tile(cnx.x, cnx.y, cnx)
                 this.west.draw();
+                this.west.visit();
             }
             this.visited = true;
         }

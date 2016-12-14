@@ -8,7 +8,8 @@ function Corridor(parent_obj, relation, psg_length){
       .visit(): does nothing.
     */
     AHQ.DungeonTile.call(this, parent_obj, relation);
-    if(this.parent.constructor.name == 'Junction'){
+    this.visited = false;
+    if(this.parent.constructor == AHQ.Junction){
         this.beginning = this.parent;
         switch(this.of_parent.toLowerCase()){
         case 'n':
@@ -47,7 +48,7 @@ function Corridor(parent_obj, relation, psg_length){
             }
             if(this.height>0){
                 this.end = new AHQ.Junction(this, 's')
-                if(this.parent.south != null){
+                if(!(this.parent.south == null || this.parent.south == "unknown")){
                     // we need to remove the existing south the Junction
                     this.parent.south.remove();
                 }
@@ -98,8 +99,87 @@ function Corridor(parent_obj, relation, psg_length){
             }
             break;
         }
+    } else if (this.parent.constructor == AHQ.Door){
+        // corridor must travel along the wall of the room this is coming from, not away from it
+        // the 'beginning' will always be either west end or north end, 'end' is opposite
+        switch(this.parent.of_parent.toLowerCase()){
+            case 'n':
+                // the door is on the north wall - we go E-W
+                this.width = psg_length || AHQ.choose(AHQ.table_passage_length);
+                this.height = 2;
+                while(this.width > 0){
+                    //console.debug('Flubbing new corridor.x attribute')
+                    this.x = this.parent.x-2;
+                    this.y = this.parent.y-1;
+                    if(AHQ.test_placement(this.x-2, this.y, this.width+2, this.height) != null){
+                        this.width = this.width - 5;
+                    } else {
+                        break
+                    }
+                }
+                if(this.width > 0){
+                    this.beginning = new AHQ.Junction(this, 'w')
+                    this.end = new AHQ.Junction(this, 'e')
+                }
+                break;
+            case 's':
+                this.width = psg_length || AHQ.choose(AHQ.table_passage_length);
+                this.height = 2;
+                while(this.width > 0){
+                    //console.debug('Flubbing new corridor.x attribute')
+                    this.x = this.parent.x-2;
+                    this.y = this.parent.y+1;
+                    if(AHQ.test_placement(this.x-2, this.y, this.width+2, this.height) != null){
+                        this.width = this.width - 5;
+                    } else {
+                        break
+                    }
+                }
+                if(this.width > 0){
+                    this.beginning = new AHQ.Junction(this, 'w')
+                    this.end = new AHQ.Junction(this, 'e')
+                }
+                break;
+            case 'e':
+                this.height = psg_length || AHQ.choose(AHQ.table_passage_length);
+                this.width = 2;
+                while(this.height > 0){
+                    //console.debug('Flubbing new corridor.y attribute')
+                    this.x = this.parent.x+1;
+                    this.y = this.parent.y-2;
+                    if(AHQ.test_placement(this.x, this.y-2, this.width, this.height+2) != null){
+                        this.height = this.height - 5;
+                    } else {
+                        break
+                    }
+                }
+                if(this.height > 0){
+                    this.beginning = new AHQ.Junction(this, 'n')
+                    this.end = new AHQ.Junction(this, 's')
+                }
+                break;
+            case 'w':
+                this.height = psg_length || AHQ.choose(AHQ.table_passage_length);
+                this.width = 2;
+                while(this.height > 0){
+                    //console.debug('Flubbing new corridor.y attribute')
+                    this.x = this.parent.x-1;
+                    this.y = this.parent.y-2;
+                    if(AHQ.test_placement(this.x, this.y-2, this.width, this.height+2) != null){
+                        this.height = this.height - 5;
+                    } else {
+                        break
+                    }
+                }
+                if(this.height > 0){
+                    this.beginning = new AHQ.Junction(this, 'n')
+                    this.end = new AHQ.Junction(this, 's')
+                }
+                break;
+        }
     } else {
         console.error("Haven't Implemented non-Junction ("+this.parent.constructor.name+") Parents for Corridors yet!")
+
     }
     
     if(this.width != 0 && this.height != 0){
@@ -109,16 +189,38 @@ function Corridor(parent_obj, relation, psg_length){
             d = new AHQ.Door(this);
             if(d.chosen_loc != null){
                 this.doors.push(d);
-                d.draw();
+                //d.draw();
             }
         } else if (this.passage_feature == '2 Doors'){
             for(door_placement_iterator=0; door_placement_iterator < 2; door_placement_iterator++){
                 d = new AHQ.Door(this);
                 if(d.chosen_loc != null){
                     this.doors.push(d);
-                    d.draw();
+                    //d.draw();
                 }
             }
+        }
+    }
+
+    this.make_placeholder = function(){
+        /* Corridors can be placed semi-randomly behind doors, and in the process we check if
+        the corridor will even FIT in the random location. So we don't want to make a 
+        placeholder in the constructor (or it'd block itself). */
+        if (this.parent.constructor == AHQ.Door){
+            if(this.width==2){
+                // it's a N/S passage
+                x = this.x
+                y = this.y - 2
+                w = this.width
+                h = this.height + 2
+            } else {
+                // it's a E/W passage
+                x = this.x - 2
+                y = this.y
+                w = this.width + 2
+                h = this.height
+            }
+            this.placeholder = AHQ.make_placeholder(x,y,w,h,true)
         }
     }
     this.draw = function(){
@@ -170,10 +272,15 @@ function Corridor(parent_obj, relation, psg_length){
                 this.doors[d_idx].draw();
             }
         }
+        for(di = 0; di < this.doors.length; di++){
+            this.doors[di].draw();
+        }
         this.drawn = true;
         AHQ.the_map.place_tile(this.x, this.y, this)
     }
-    this.visit = function(){}
+    this.visit = function(){
+        this.visited = true;
+    }
     this.remove = function(){
         /* Remove all traces of this corridor from registries and the canvas. */
         if(this.g){
@@ -181,7 +288,6 @@ function Corridor(parent_obj, relation, psg_length){
             delete AHQ.registry_tiles[this.g.id]
         }
     }
-    return this;
 }
 Corridor.prototype = Object.create(AHQ.DungeonTile.prototype);
 Corridor.prototype.constructor = Corridor;
