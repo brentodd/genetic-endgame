@@ -111,7 +111,7 @@ function Corridor(parent_obj, relation, psg_length){
                     //console.debug('Flubbing new corridor.x attribute')
                     this.x = this.parent.x-2;
                     this.y = this.parent.y-1;
-                    if(AHQ.test_placement(this.x-2, this.y, this.width+2, this.height) != null){
+                    if(AHQ.test_placement(this.x-2, this.y, this.width+4, this.height, true) != null){
                         this.width = this.width - 5;
                     } else {
                         break
@@ -129,7 +129,7 @@ function Corridor(parent_obj, relation, psg_length){
                     //console.debug('Flubbing new corridor.x attribute')
                     this.x = this.parent.x-2;
                     this.y = this.parent.y+1;
-                    if(AHQ.test_placement(this.x-2, this.y, this.width+2, this.height) != null){
+                    if(AHQ.test_placement(this.x-2, this.y, this.width+4, this.height, true) != null){
                         this.width = this.width - 5;
                     } else {
                         break
@@ -147,7 +147,7 @@ function Corridor(parent_obj, relation, psg_length){
                     //console.debug('Flubbing new corridor.y attribute')
                     this.x = this.parent.x+1;
                     this.y = this.parent.y-2;
-                    if(AHQ.test_placement(this.x, this.y-2, this.width, this.height+2) != null){
+                    if(AHQ.test_placement(this.x, this.y-2, this.width, this.height+4, true) != null){
                         this.height = this.height - 5;
                     } else {
                         break
@@ -165,7 +165,7 @@ function Corridor(parent_obj, relation, psg_length){
                     //console.debug('Flubbing new corridor.y attribute')
                     this.x = this.parent.x-1;
                     this.y = this.parent.y-2;
-                    if(AHQ.test_placement(this.x, this.y-2, this.width, this.height+2) != null){
+                    if(AHQ.test_placement(this.x, this.y-2, this.width, this.height+4, true) != null){
                         this.height = this.height - 5;
                     } else {
                         break

@@ -7,7 +7,7 @@ var AHQ = AHQ || {
     options: {scale: 12,  // square size in pixels
               fontSize: 12,
               max_x: 80,    // Maximum width of the map (E-W)
-              max_y: 65,    // Maximum height of the map (N-S)
+              max_y: 80,    // Maximum height of the map (N-S)
               start_x: 24,  // X of starting square of dungeon
               start_y: 12,  // Y of starting square of dungeon
               start_from: 'n', // stairs down come from what direction?

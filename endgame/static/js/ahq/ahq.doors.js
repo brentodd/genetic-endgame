@@ -166,7 +166,7 @@ function Door(parent_obj, relation){
                 || test_room.x >= AHQ.options.max_x || test_room.y >= AHQ.options.max_y
                 || test_room.width <= 0 || test_room.height <= 0){
                 test_room.remove();
-            } else if(AHQ.test_placement(test_room.x, test_room.y, test_room.width, test_room.height) != null){
+            } else if(AHQ.test_placement(test_room.x, test_room.y, test_room.width, test_room.height, true) != null){
                 // this room did not fit in this randomzied location, but the door position might still be ok
                 //console.info('This test door at (' + this.x + ', ' + this.y + ')' + ' test ROOM at (' + test_room.x + ', ' + test_room.y + '), ' + ' and the rooms dimensions are ' + test_room.width + 'x' + test_room.height)
                 test_room.remove();
@@ -235,7 +235,12 @@ function Door(parent_obj, relation){
                 // we've already decided what and where child is, but since
                 // then a new tile may have stolen that spot. Need to check
                 // if there's still room?
-                this.child.draw();
+                //if(AHQ.test_placement(test_room.x, test_room.y, test_room.width, test_room.height) != null){
+                //    this.child.remove();
+                //    this.remove();
+                //} else {
+                    this.child.draw();
+                //}
             }
             this.visited = true;
         }
@@ -245,6 +250,9 @@ function Door(parent_obj, relation){
         delete AHQ.registry_doors[this.g.id];
         AHQ.the_map.delete_tile(this);
         this.g.remove();
+        if(this.child){
+            this.child.remove();
+        }
         console.warn("door deleted")
     }
 }
