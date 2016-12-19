@@ -194,28 +194,44 @@ function Junction(parent_obj, relation, type){
             ph_y = this.y - 7;
             ph_width = 2;
             ph_height = 7;
-            this.north = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height, true);
+            if(AHQ.test_placement(ph_x,ph_y,ph_width,ph_height) != null){
+                this.north = null
+            } else {
+                this.north = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height, true);
+            }
         }
         if(this.south == 'unknown'){
             ph_x = this.x;
             ph_y = this.y + 2;
             ph_width = 2;
             ph_height = 7;
-            this.south = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height, true);
+            if(AHQ.test_placement(ph_x,ph_y,ph_width,ph_height) != null){
+                this.south = null
+            } else {
+                this.south = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height, true);
+            }
         }
         if(this.east == 'unknown'){
             ph_x = this.x + 2;
             ph_y = this.y;
             ph_width = 7;
             ph_height = 2;
-            this.east = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height, true);
+            if(AHQ.test_placement(ph_x,ph_y,ph_width,ph_height) != null){
+                this.east = null
+            } else {
+                this.east = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height, true);
+            }
         }
         if(this.west == 'unknown'){
             ph_x = this.x - 7;
             ph_y = this.y;
             ph_width = 7;
             ph_height = 2;
-            this.west = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height, true);
+            if(AHQ.test_placement(ph_x,ph_y,ph_width,ph_height) != null){
+                this.west = null
+            } else {
+                this.west = AHQ.make_placeholder(ph_x,ph_y,ph_width,ph_height, true);
+            }
         }
         x_scaled = this.x*AHQ.options.scale;
         y_scaled = this.y*AHQ.options.scale;
