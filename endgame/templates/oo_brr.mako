@@ -7,6 +7,11 @@
         <script src="/static/lib/snap/snap.svg-min.js"></script>
         <style>
         body{padding:0;margin:0;}
+        #container{
+            display:block;
+            height:550px;
+            overflow-y:hidden;
+        }
         #svg {
             border: solid 2px #ccc;
             background-color: #000;
@@ -22,8 +27,10 @@
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     </head>
     <body>
-        <svg id="svg" class="col-sm-offset-1 col-sm-10">
-        </svg>
+        <div id="container">
+            <svg id="svg" class="col-sm-offset-1 col-sm-10">
+            </svg>
+        </div>
 
   <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
@@ -43,7 +50,12 @@
     $(function(){
         var s = Snap("#svg");
         AHQ.canvas = s;
-        s.attr({ viewBox: "0 0 "+AHQ.options.max_x*AHQ.options.scale+" "+AHQ.options.max_y*AHQ.options.scale});
+        vb = ((AHQ.options.start_x * AHQ.options.scale) - (9*AHQ.options.scale)) + " " +
+             ((AHQ.options.start_y * AHQ.options.scale) - (5*AHQ.options.scale)) + " " +
+             (20*AHQ.options.scale) + " " + 
+             document.documentElement.clientHeight
+             //(AHQ.options.max_y*AHQ.options.scale)
+        s.attr({ viewBox: vb});
         AHQ.the_map = new AHQ.TileSpace(AHQ.options.max_x, AHQ.options.max_y)
         dungeon_entry = new AHQ.Junction()
         //dungeon_entry.south.remove();
@@ -57,7 +69,8 @@
 
         //AHQ.the_o_g.animate({ transform:'translate(300,100)'}, 700, mina.bounce);
         keys = {97:'a',119:'w',115:'s', 100:'d',
-                65:'A',87:'W',83:'S', 68:'D',}
+                65:'A',87:'W',83:'S', 68:'D',
+                77: 'M', 109: 'm',}
         $("body").keypress(function(event){
             key = keys[event.which];
             switch(key.toUpperCase()){
@@ -101,6 +114,8 @@
                 ragnar.move(-1, 0)
                 ragnar.move(-1, 0)
                 break;
+            case 'M':
+                AHQ.canvas.attr({viewBox: "0 0 "+AHQ.options.max_x*AHQ.options.scale+" "+AHQ.options.max_y*AHQ.options.scale})
             }
         })
     })
@@ -108,8 +123,8 @@
 function Super(){
     this.val = 1
 }
-Super.prototype.method = function(){
-    console.debug('Super.method() was called')
+Super.prototype.a_method_name = function(){
+    console.debug('Super.a_method_name() was called')
 }
 
 function Sub(){
@@ -117,9 +132,9 @@ function Sub(){
     Super.call(this)
 }
 Sub.prototype = Object.create(Super.prototype);
-Sub.prototype.method = function(){
-    console.info(Object.getPrototypeOf(Sub.prototype).method.call(this))
-    console.debug('Sub.method() was called')
+Sub.prototype.a_method_name = function(){
+    console.info(Object.getPrototypeOf(Sub.prototype).a_method_name.call(this))
+    console.debug('Sub.a_method_name() was called')
 }
 Sub.prototype.constructor = Sub;
     </script>
