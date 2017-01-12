@@ -45,11 +45,13 @@
                 this.transform_y -= y;
                 AHQ.gt.x -= x; AHQ.gt.y -= y;
             }
+            /*
             vb = ((this.x * AHQ.options.scale) - (9*AHQ.options.scale)) + " " +
              ((this.y * AHQ.options.scale) - (5*AHQ.options.scale)) + " " +
              (20*AHQ.options.scale) + " " + 
              document.documentElement.clientHeight
             AHQ.canvas.attr({ viewBox: vb});
+            */
         }
     }
     AHQ.Mob = Mob;

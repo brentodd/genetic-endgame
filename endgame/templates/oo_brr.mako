@@ -9,7 +9,7 @@
         body{padding:0;margin:0;}
         #container{
             display:block;
-            height:550px;
+            height:auto;
             overflow-y:hidden;
         }
         #svg {
@@ -50,12 +50,15 @@
     $(function(){
         var s = Snap("#svg");
         AHQ.canvas = s;
+/*
         vb = ((AHQ.options.start_x * AHQ.options.scale) - (9*AHQ.options.scale)) + " " +
              ((AHQ.options.start_y * AHQ.options.scale) - (5*AHQ.options.scale)) + " " +
              (20*AHQ.options.scale) + " " + 
              document.documentElement.clientHeight
              //(AHQ.options.max_y*AHQ.options.scale)
         s.attr({ viewBox: vb});
+*/
+        s.attr({ viewBox: "0 0 "+AHQ.options.max_x*AHQ.options.scale+" "+AHQ.options.max_y*AHQ.options.scale});
         AHQ.the_map = new AHQ.TileSpace(AHQ.options.max_x, AHQ.options.max_y)
         dungeon_entry = new AHQ.Junction()
         //dungeon_entry.south.remove();
